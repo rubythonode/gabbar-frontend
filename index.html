@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <title>Gabbar &middot; Mapbox Data</title>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='shortcut icon' href='Your favicon path goes here' type='image/x-icon'>
+    <link href='https://api.mapbox.com/mapbox-assembly/v0.12.0/assembly.min.css' rel='stylesheet'>
+
+    <style>
+    body {
+        margin: 0 auto;
+        padding-top: 1em;
+        max-width: 50em;
+        line-height: 1.5em;
+    }
+    pre {
+        margin-top: 1em;
+    }
+    </style>
+    <script async defer src='https://api.mapbox.com/mapbox-assembly/v0.12.0/assembly.js'></script>
+</head>
+<body>
+
+    <div class="prose align-center">
+        <h1 class="txt-normal">Gabbar</h1>
+        <small class="txt-uppercase">Experimental: Under development</small>
+        <small>NOTE: We are working on a backfill for changesets before 28th April, 2017</small>
+
+        <hr>
+
+        <div class="align-center">
+            <form id='changesetForm'>
+                <input id='changesetInput' value='' placeholder='Changeset ID' />
+                <button id='submitChangeset' class='btn round'>Submit</button>
+            </form>
+            <small>Ex: <a target="_blank" href='https://mapbox.github.io/gabbar/#48216777'>https://mapbox.github.io/gabbar/#48216777</a></small>
+        </div>
+    </div>
+
+    <div>
+        <div id='changesetPrediction'></div>
+        <pre class="pre"><code id='predictionDetails'></code></pre>
+    </div>
+
+    <script>
+    function downloadPrediction(changesetID) {
+        function reqListener() {
+            try {
+                document.getElementById('predictionDetails').innerHTML = JSON.stringify(JSON.parse(this.responseText), undefined, 2);
+                document.getElementById('changesetPrediction').innerHTML = 'Changeset looks <strong class="txt-uppercase">' + JSON.parse(this.responseText).prediction + '<strong>.';
+            } catch (error) {
+                document.getElementById('predictionDetails').innerHTML = 'Sorry, do not have predictions for changeset: ' + changesetID;
+                document.getElementById('changesetPrediction').innerHTML = '';
+            }
+        }
+
+        var oReq = new XMLHttpRequest();
+        oReq.addEventListener('load', reqListener);
+
+        var url = 'https://s3-us-west-2.amazonaws.com/mapbox-gabbar/public/predictions/staging/' + changesetID + '.json';
+        oReq.open('GET',  url);
+        oReq.send();
+    }
+
+    if (location.hash !== '') {
+        var changesetID = location.hash.split('/')[0].replace('#', '');
+        document.getElementById('changesetInput').value = changesetID;
+        downloadPrediction(changesetID);
+    } else {
+        document.getElementById('changesetForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            var changesetID = document.getElementById('changesetInput').value;
+            if (changesetID !== '') {
+                location.hash = changesetID;
+                downloadPrediction(changesetID);
+            }
+        });
+    }
+    </script>
+</body>
+</html>
